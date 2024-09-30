@@ -29,12 +29,10 @@
 
         <v-btn @click="showMyQR" class="upload-button">Mi QR</v-btn>
 
-        <div class="bottom-left-button">
+        <div class="bottom-button-container">
           <v-btn @click="pasteFromClipboard" class="bottom-button">Paste</v-btn>
         </div>
-        <div class="bottom-right-button">
-          <qrcode-capture ref="qrcodeCapture" @detect="onDetect" />
-        </div>
+
       </qrcode-stream>
 
       <v-btn @click="close" class="close-button" icon>
@@ -187,22 +185,21 @@ export default {
   z-index: 20;
 }
 
-.bottom-left-button {
+.bottom-button-container {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
-  z-index: 20;
-}
-
-.bottom-right-button {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px; 
   z-index: 20;
 }
 
 .bottom-button {
-  margin: 5px 0;
+  width: 100%;
+  height: 50px;
+  margin: 0;
+  border-radius: 5px; 
+  padding: 10px; 
 }
 
 .upload-button {
@@ -222,5 +219,4 @@ export default {
   border-radius: 50%;
   z-index: 30;
 }
-
 </style>
