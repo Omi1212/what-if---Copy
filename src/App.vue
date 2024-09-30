@@ -1,13 +1,13 @@
 <template>
   <v-container>
     <v-alert type="error" v-if="noFrontCamera">You don't seem to have a front camera on your device</v-alert>
-    <v-alert type="error" v-if="noRearCamera">You do not seem to have a rear camera on your device</v-alert>
+    <v-alert type="error" v-if="noRearCamera">You don't seem to have a rear camera on your device</v-alert>
 
     <v-card class="camera-container">
       <qrcode-stream
         :paused="paused"
         :torch="torchActive"
-        :constraints="{ deviceId: facingMode }"
+        :constraints="{ facingMode: facingMode }"
         @detect="onDetect"
         @error="onError"
         @camera-on="onCameraOn"
@@ -87,9 +87,6 @@ export default {
     },
     validationFailure() {
       return this.isValid === false
-    },
-    torchIcon() {
-      return this.torchActive ? './assets/destello.png' : './assets/destello.png'
     }
   },
 
@@ -108,26 +105,23 @@ export default {
       }
       console.error(error)
     },
-    resetValidationState() {
-      this.isValid = undefined
-    },
     async onDetect([firstDetectedCode]) {
       this.result = firstDetectedCode.rawValue
       this.paused = true
       console.log(this.result)
-      this.isValid = regexs.value.some(({ regex }) => regex.test(this.result))
+      this.validateResult()
       await this.timeout(2000)
       this.paused = false
+    },
+    validateResult() {
+      this.isValid = regexs.value.some(({ regex }) => regex.test(this.result))
     },
     timeout(ms) {
       return new Promise(resolve => setTimeout(resolve, ms))
     },
     switchCamera() {
-      if (this.videoInputDevices.length > 0) {
-        this.currentDeviceIndex = (this.currentDeviceIndex + 1) % this.videoInputDevices.length
-        this.facingMode = this.videoInputDevices[this.currentDeviceIndex].deviceId
-        console.log(`Switched to camera: ${this.videoInputDevices[this.currentDeviceIndex].label}`)
-      }
+      this.facingMode = this.facingMode === 'environment' ? 'user' : 'environment'
+      console.log(`Switched to ${this.facingMode === 'environment' ? 'rear' : 'front'} camera`)
     },
     onCameraOn(capabilities) {
       console.log(capabilities)
@@ -138,7 +132,7 @@ export default {
         const text = await navigator.clipboard.readText()
         this.result = text
         console.log(this.result)
-        this.isValid = regexs.value.some(({ regex }) => regex.test(this.result))
+        this.validateResult()
         this.paused = true
         await this.timeout(2000)
         this.paused = false
@@ -146,34 +140,11 @@ export default {
         console.error('Failed to read clipboard contents: ', err)
       }
     },
-    handleFileUpload(event) {
-      const file = event.target.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const img = new Image()
-          img.onload = () => {
-            const canvas = document.createElement('canvas')
-            canvas.width = img.width
-            canvas.height = img.height
-            const ctx = canvas.getContext('2d')
-            ctx.drawImage(img, 0, 0, img.width, img.height)
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-            this.$refs.qrcodeCapture.decode(imageData)
-          }
-          img.src = e.target.result
-        }
-        reader.readAsDataURL(file)
-      }
-    },
     close() {
       console.log('Close button clicked')
     },
     showMyQR() {
       console.log('Mi QR button clicked')
-    },
-    triggerFileUpload() {
-      this.$el.querySelector('input[type="file"]').click()
     },
     toggleTorch() {
       this.torchActive = !this.torchActive
@@ -246,22 +217,10 @@ export default {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: red;
+  background-color: #fd7744;
   color: white;
   border-radius: 50%;
   z-index: 30;
 }
 
-.custom-upload-button {
-  background-color: #4CAF50; /* Green background */
-  color: white; /* White text */
-  border-radius: 5px; /* Rounded corners */
-  padding: 10px 20px; /* Padding */
-  font-size: 16px; /* Font size */
-  text-transform: uppercase; /* Uppercase text */
-}
-
-.custom-upload-button:hover {
-  background-color: #45a049; /* Darker green on hover */
-}
 </style>
