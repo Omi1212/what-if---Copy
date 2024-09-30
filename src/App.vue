@@ -1,222 +1,85 @@
 <template>
-  <v-container>
-    <v-alert type="error" v-if="noFrontCamera">You don't seem to have a front camera on your device</v-alert>
-    <v-alert type="error" v-if="noRearCamera">You don't seem to have a rear camera on your device</v-alert>
+  <v-app>
+    <v-container>
+      <v-app-bar app color="teal" dark elevation="3">
+        <v-toolbar-title>Todo List</v-toolbar-title>
+      </v-app-bar>
 
-    <v-card class="camera-container">
-      <qrcode-stream
-        :paused="paused"
-        :torch="torchActive"
-        :constraints="{ facingMode: facingMode }"
-        @detect="onDetect"
-        @error="onError"
-        @camera-on="onCameraOn"
-      >
-        <v-alert type="success" v-if="validationSuccess && paused">This is a valid code</v-alert>
-        <v-alert type="error" v-if="validationFailure && paused">This is NOT a valid code!</v-alert>
-        <v-alert type="info" v-if="validationPending && paused">Long validation in progress...</v-alert>
+      <v-row justify="center" class="mt-10">
+        <v-col cols="12" md="8">
+          <v-card elevation="3">
+            <v-card-title>
+              <v-text-field
+                v-model="newTask"
+                label="New Task"
+                outlined
+                dense
+                required
+                @keyup.enter="addTask"
+              ></v-text-field>
+              <v-spacer></v-spacer>
+              <v-btn @click="addTask" color="teal" class="ml-2">Add</v-btn>
+            </v-card-title>
+          </v-card>
+        </v-col>
+      </v-row>
 
-        <div class="top-buttons">
-          <v-btn @click="switchCamera" icon>
-            <v-icon>mdi-camera-switch</v-icon>
-          </v-btn>
-          <v-btn @click="toggleTorch" :disabled="torchNotSupported" icon>
-            <v-icon>mdi-flashlight</v-icon>
-          </v-btn>
-        </div>
-
-        <div class="qr-frame"></div>
-
-        <v-btn @click="showMyQR" class="upload-button">Mi QR</v-btn>
-
-        <div class="bottom-button-container">
-          <v-btn @click="pasteFromClipboard" class="bottom-button">Paste</v-btn>
-        </div>
-
-      </qrcode-stream>
-
-      <v-btn @click="close" class="close-button" icon>
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-    </v-card>
-  </v-container>
+      <v-row justify="center" class="mt-2">
+        <v-col cols="12" md="8">
+          <v-list dense elevation="3">
+            <v-list-item
+              v-for="(task, index) in tasks"
+              :key="index"
+              :class="{ 'task-completed': task.completed }"
+            >
+              <v-list-item-content>
+                <v-checkbox
+                  v-model="task.completed"
+                  @change="toggleTaskCompletion(task)"
+                  :label="task.text"
+                ></v-checkbox>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-btn @click="deleteTask(index)" color="red">
+                  delete
+                </v-btn>
+              </v-list-item-action>
+            </v-list-item>
+          </v-list>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-app>
 </template>
 
 <script>
-import { QrcodeStream, QrcodeCapture } from 'vue-qrcode-reader'
-import { shallowRef } from 'vue'
-
-const PTypes = {
-  BOLT11: 'BOLT11',
-  LnAddress: 'LnAddress',
-  LNURLP: 'LNURLP'
-}
-
-const regexs = shallowRef([
-  { name: PTypes.BOLT11, regex: /^(lnbc|lntb|lnsb|lnbcrt)([0-9]{1,}[munp]?)?(1)([02-9ac-hj-np-z]{1,}){6,}$/i },
-  { name: PTypes.LnAddress, regex: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/ },
-  { name: PTypes.LNURLP, regex: /^(lnurl1){1}[0-9ac-hj-np-z]+$/i }
-])
-
 export default {
-  components: { QrcodeStream, QrcodeCapture },
-
   data() {
     return {
-      isValid: undefined,
-      paused: false,
-      result: null,
-      facingMode: 'environment',
-      noRearCamera: false,
-      noFrontCamera: false,
-      torchActive: false,
-      torchNotSupported: false,
-      videoInputDevices: [],
-      currentDeviceIndex: 0
-    }
+      newTask: '',
+      tasks: []
+    };
   },
-
-  computed: {
-    validationPending() {
-      return this.isValid === undefined && this.paused
-    },
-    validationSuccess() {
-      return this.isValid === true
-    },
-    validationFailure() {
-      return this.isValid === false
-    }
-  },
-
-  mounted() {
-    this.getVideoInputDevices()
-  },
-
   methods: {
-    async getVideoInputDevices() {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      this.videoInputDevices = devices.filter(device => device.kind === 'videoinput')
-    },
-    onError(error) {
-      if (error.name === 'OverconstrainedError') {
-        this.facingMode === 'environment' ? this.noRearCamera = true : this.noFrontCamera = true
-      }
-      console.error(error)
-    },
-    async onDetect([firstDetectedCode]) {
-      this.result = firstDetectedCode.rawValue
-      this.paused = true
-      console.log(this.result)
-      this.validateResult()
-      await this.timeout(2000)
-      this.paused = false
-    },
-    validateResult() {
-      this.isValid = regexs.value.some(({ regex }) => regex.test(this.result))
-    },
-    timeout(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms))
-    },
-    switchCamera() {
-      this.facingMode = this.facingMode === 'environment' ? 'user' : 'environment'
-      console.log(`Switched to ${this.facingMode === 'environment' ? 'rear' : 'front'} camera`)
-    },
-    onCameraOn(capabilities) {
-      console.log(capabilities)
-      this.torchNotSupported = !capabilities.torch
-    },
-    async pasteFromClipboard() {
-      try {
-        const text = await navigator.clipboard.readText()
-        this.result = text
-        console.log(this.result)
-        this.validateResult()
-        this.paused = true
-        await this.timeout(2000)
-        this.paused = false
-      } catch (err) {
-        console.error('Failed to read clipboard contents: ', err)
+    addTask() {
+      if (this.newTask.trim() !== '') {
+        this.tasks.push({ text: this.newTask, completed: false });
+        this.newTask = '';
       }
     },
-    close() {
-      console.log('Close button clicked')
+    deleteTask(index) {
+      this.tasks.splice(index, 1);
     },
-    showMyQR() {
-      console.log('Mi QR button clicked')
-    },
-    toggleTorch() {
-      this.torchActive = !this.torchActive
+    toggleTaskCompletion(task) {
+      task.completed = !task.completed;
     }
   }
-}
+};
 </script>
 
 <style scoped>
-.camera-container {
-  width: 100%;
-  max-width: 400px;
-  height: 740px;
-  margin: 0 auto;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-}
-
-.qr-frame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60%;
-  padding-top: 60%;
-  transform: translate(-50%, -50%);
-  border: 4px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-}
-
-.top-buttons {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 20;
-}
-
-.bottom-button-container {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 10px; 
-  z-index: 20;
-}
-
-.bottom-button {
-  width: 100%;
-  height: 50px;
-  margin: 0;
-  border-radius: 5px; 
-  padding: 10px; 
-}
-
-.upload-button {
-  position: absolute;
-  top: calc(50% + 20%);
-  left: 50%;
-  transform: translate(-50%, 0);
-  z-index: 20;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #fd7744;
-  color: white;
-  border-radius: 50%;
-  z-index: 30;
+.task-completed {
+  text-decoration: line-through;
+  color: gray;
 }
 </style>
