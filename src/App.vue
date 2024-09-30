@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-alert type="error" v-if="noFrontCamera">You don't seem to have a front camera on your device</v-alert>
-    <v-alert type="error" v-if="noRearCamera">You don't seem to have a rear camera on your device</v-alert>
+    <v-alert type="error" v-if="noRearCamera">You do not seem to have a rear camera on your device</v-alert>
 
     <v-card class="camera-container">
       <qrcode-stream
