@@ -132,11 +132,7 @@ export default {
       return new Promise(resolve => setTimeout(resolve, ms))
     },
     switchCamera() {
-      if (this.videoInputDevices.length > 0) {
-        this.currentDeviceIndex = (this.currentDeviceIndex + 1) % this.videoInputDevices.length
-        this.facingMode = this.videoInputDevices[this.currentDeviceIndex].deviceId
-        console.log(`Switched to camera: ${this.videoInputDevices[this.currentDeviceIndex].label}`)
-      }
+      this.facingMode = this.facingMode === 'environment' ? 'user' : 'environment'
     },
     onCameraOn(capabilities) {
       console.log(capabilities)
@@ -251,7 +247,7 @@ export default {
 /* Contenedor de botones de íconos en la parte superior */
 .top-button-container {
   position: absolute;
-  top: 20px; /* Ajusta la distancia desde la parte superior */
+  top: 10%; /* Ajusta la distancia desde la parte superior */
   left: 0;
   right: 0;
   display: flex;
