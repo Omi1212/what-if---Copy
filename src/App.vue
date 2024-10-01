@@ -10,7 +10,7 @@
             <qrcode-stream
               :paused="paused"
               :torch="torchActive"
-              :constraints="{ deviceId: facingMode }"
+              :constraints="{ facingMode: facingMode }"
               @detect="onDetect"
               @error="onError"
               @camera-on="onCameraOn"
@@ -52,9 +52,9 @@
 </template>
 
 <script>
-import { QrcodeStream, QrcodeCapture } from 'vue-qrcode-reader'
+import { QrcodeStream } from 'vue-qrcode-reader'
 import { shallowRef, ref, onMounted } from 'vue'
-import { VApp, VContainer, VRow, VCol, VCard, VAlert, VBtn, VIcon, VFileInput } from 'vuetify/components'
+import { VApp, VContainer, VRow, VCol, VCard, VAlert, VBtn, VIcon } from 'vuetify/components'
 
 const PTypes = {
   BOLT11: 'BOLT11',
@@ -69,7 +69,7 @@ const regexs = shallowRef([
 ])
 
 export default {
-  components: { QrcodeStream, QrcodeCapture, VApp, VContainer, VRow, VCol, VCard, VAlert, VBtn, VIcon, VFileInput },
+  components: { QrcodeStream, VApp, VContainer, VRow, VCol, VCard, VAlert, VBtn, VIcon },
 
   data() {
     return {
