@@ -260,7 +260,7 @@ export default {
 /* Contenedor de botones default en la parte inferior */
 .bottom-button-container {
   position: absolute;
-  bottom: 20px; /* Ajusta la distancia desde la parte inferior */
+  bottom: 10%; /* Ajusta la distancia desde la parte inferior */
   left: 0;
   right: 0;
   display: flex;
